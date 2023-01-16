@@ -102,5 +102,5 @@ class instagramBot:
                 sleep(5)
 
 
-rochaBot = instagramBot('mineirimdeveloper', 'mineirim562389')
+rochaBot = instagramBot('user_name', 'password')
 rochaBot.login()
