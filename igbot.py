@@ -94,8 +94,6 @@ class instagramBot:
                 # clicar no botão postar
                 driver.find_element("xpath", "//div[@class='x1i10hfl x1qjc9v5 xdl72j9 x2lah0s xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r x2lwn1j xeuugli x1hl2dhg xggy1nq x1ja2u2z x1t137rt x1q0g3np x1lku1pv x1a2a7pz xjyslct x9f619 x1ypdohk x1i0vuye xwhw2v2 x17ydfre xl56j7k x1f6kntn x2b8uid xlyipyv x87ps6o x14atkfc x1lcm9me x1yr5g0i xrt01vj x10y3i5r x1d5wrs8 x1v8p93f xogb00i x16stqrj x1ftr3km x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x972fbf xcfux6l x1qhh985 xm0m39n xt0psk2 xexx8yu x4uap5 x18d9i69 xkhd6sd x1n2onr6 xjbqb8w xt7dq6l x173jzuc']").click()
                 sleep(10)
-                # driver.find_element(By.CLASS_NAME, "_ab6-").click()
-                # sleep(10)
 
             except Exception as e:
                 print(e)
