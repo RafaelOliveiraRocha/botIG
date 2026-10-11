@@ -1,104 +1,82 @@
-from selenium import webdriver
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
-from time import sleep
-import random
-from selenium.webdriver.chrome.service import Service
-from selenium import webdriver
+"""CLI do botIG. Ajuda e importação não carregam Selenium nem abrem navegador."""
 
-# Seleciona o Chrome como navegador
-service = Service(executable_path="/path/to/chromedriver")
-driver = webdriver.Chrome(service=service)
-
-# define o login com a conta e senha passadas
+from pathlib import Path
+import argparse
+import os
+import sys
 
 
-class instagramBot:
-    def __init__(self, username, password):
-        self.username = username
-        self.password = password
-        self.driver = webdriver.Chrome(service=service,
-                                       executable_path='/caminho/para/geckodriver')
+def parser():
+    p = argparse.ArgumentParser(description="botIG: comentários visíveis em uma rede social fictícia local.")
+    p.add_argument("--demo", action="store_true", help="iniciar a demonstração local no Firefox visível")
+    p.add_argument("--hashtag", default="arte", help="hashtag a pesquisar (padrão: arte)")
+    p.add_argument("--limite", type=int, default=3, help="máximo de publicações distintas tentadas (padrão: 3)")
+    p.add_argument("--entrada", type=Path, default=Path(__file__).parent / "examples/publicacoes.json")
+    p.add_argument("--saida", type=Path, default=Path("outputs/resultado.csv"), help="CSV novo; recusa sobrescrita")
+    p.add_argument("--driver", help="caminho do geckodriver; também aceita BOTIG_DRIVER ou PATH")
+    p.add_argument("--firefox", default=os.environ.get("BOTIG_FIREFOX"), help="caminho opcional do Firefox")
+    p.add_argument("--porta", type=int, default=0, help="porta local; 0 escolhe uma livre")
+    p.add_argument("--pausa", type=float, default=0.8, help="pausa visual entre as ações, em segundos")
+    p.add_argument("--fechar-ao-final", action="store_true", help="fechar sem esperar Enter no terminal")
+    return p
 
-    def login(self):
-        driver = self.driver
-        driver.get("https://www.instagram.com/")  # Navega para o site
-        sleep(8)
 
-        # buttonLogin = driver.find_element_by_xpath("//a[@href='/accounts/login/?source=auth_switcher']")
-        # buttonLogin.click() #--> Caso a tela inicial do site peça pra clicar em login. Atualmente, pelo o que eu vi, a tela inicial já é a de login.
-        # inputUser = driver.find_element_by_xpath("//input[@name='username']") **********************
-
-        # Fazer login
-        inputUser = driver.find_element("xpath", "//input[@name='username']")
-        inputUser.click()
-        inputUser.clear()
-        inputUser.send_keys(self.username)
-        inputPassword = driver.find_element(
-            "xpath", "//input[@name='password']")
-        inputPassword.click()
-        inputPassword.clear()
-        inputPassword.send_keys(self.password)
-        inputPassword.send_keys(Keys.ENTER)
-        sleep(15)
-        self.commentHashtag('nfl')
-        sleep(15)
-
-    @staticmethod  # Digitar como humano.
-    def typeHuman(frase, ondeDigitar):
-        for letra in frase:
-            ondeDigitar.send_keys(letra)
-            sleep(random.randint(1, 5) / 30)
-
-    # Seleciona a hash para pesquisar no IG
-    def commentHashtag(self, hashtag):
-        driver = self.driver
-        driver.get("https://www.instagram.com/explore/tags/" + hashtag + "/")
-        sleep(15)
-
-        # Scroll na tela para carregar mais fotos
-        for c in range(1, 2):
-            driver.execute_script(
-                'window.scrollTo(0, document.body.scrollHeight);')
-            sleep(15)
-
-        # Seleciona todos os hrefs da página visível e os guarda na lista
-        hrefs = driver.find_elements(By.TAG_NAME, "a")
-        picHrefs = [item.get_attribute('href') for item in hrefs]
-        [href for href in picHrefs if '/p/' in href]
-        print(hashtag + ' fotos ' + str(len(picHrefs)))
-
-        # Faz um laço pela lista clicando e abrindo as fotos
-        for i in picHrefs:
-            driver.get(i)  # Clica na foto
-            driver.execute_script(
-                'window.scrollTo(0, document.body.scrollHeight);')  # Scroll após clicar para o input de comentário ficar visível e interativo
-            sleep(7)
+def main(argv=None):
+    p = parser()
+    args = p.parse_args(argv)
+    if not args.demo:
+        p.print_help()
+        return 0
+    if args.limite < 1 or not 0 <= args.porta <= 65535 or not 0 <= args.pausa <= 30:
+        p.error("Use limite positivo, porta entre 0 e 65535 e pausa entre 0 e 30.")
+    from rede_local import carregar_base, iniciar_rede, normalizar_hashtag
+    from automacao_local import Resultados, criar_driver, executar, localizar_driver
+    resultados = None
+    driver = None
+    try:
+        hashtag = normalizar_hashtag(args.hashtag)
+        base = carregar_base(args.entrada)
+        if args.saida.resolve() == args.entrada.resolve():
+            raise ValueError("Entrada e saída precisam ser arquivos diferentes.")
+        if args.saida.exists():
+            raise ValueError("O CSV de saída já existe. Escolha um nome novo.")
+        caminho_driver = localizar_driver(args.driver)
+        resultados = Resultados(args.saida)
+        with iniciar_rede(base, args.porta) as servidor:
+            print(f"Rede fictícia: {servidor.endereco}\nCSV: {args.saida}\nInterrompa pelo botão da página ou Ctrl+C.", flush=True)
+            driver = criar_driver(caminho_driver, args.firefox)
             try:
-                # lista de comentários
-                comments = ['Show!', 'Maneiro', 'Parabéns!',
-                            'Legal', 'Supimpa', 'Uuuouu', 'Show de bola']
+                executar(driver, servidor, hashtag, args.limite, resultados, args.pausa)
+                resultados.fechar()
+                print(f"Resultados gravados em {args.saida}.", flush=True)
+                if not args.fechar_ao_final and sys.stdin.isatty():
+                    input("Explore a página. Pressione Enter para fechar o navegador e o servidor: ")
+            finally:
+                try:
+                    driver.quit()
+                finally:
+                    driver = None
+        return 0
+    except (ValueError, OSError) as exc:
+        print(f"Configuração: {exc}", file=sys.stderr)
+        return 2
+    except KeyboardInterrupt:
+        print("Execução interrompida. O CSV preserva as linhas já gravadas.", file=sys.stderr)
+        return 130
+    except Exception:
+        if resultados and not resultados.linhas:
+            resultados.registrar("", args.hashtag, "", "Falha técnica", "Não foi possível iniciar o navegador local.")
+        print("Falha técnica. Confira Firefox, geckodriver, ambiente gráfico e a porta local.", file=sys.stderr)
+        return 1
+    finally:
+        if driver is not None:
+            try:
+                driver.quit()
+            except Exception:
+                print("Não foi possível concluir o fechamento do navegador.", file=sys.stderr)
+        if resultados is not None and not resultados.arquivo.closed:
+            resultados.fechar()
 
-                # Clicar no input de comentário para digitar
-                driver.find_element(
-                    "xpath", "//textarea[@placeholder='Adicione um comentário...']").click()
-                # guarda a referência do input para dizer depois para a função typeHuman onde digitar
-                inputComment = driver.find_element(
-                    "xpath", "//textarea[@placeholder='Adicione um comentário...']")
-                sleep(random.randint(2, 5))
-                # Chamada a função para digitar o comentário
-                self.typeHuman(random.choice(comments), inputComment)
-                sleep(random.randint(10, 20))
-                # clicar no botão postar
-                driver.find_element("xpath", "//div[@class='x1i10hfl x1qjc9v5 xdl72j9 x2lah0s xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r x2lwn1j xeuugli x1hl2dhg xggy1nq x1ja2u2z x1t137rt x1q0g3np x1lku1pv x1a2a7pz xjyslct x9f619 x1ypdohk x1i0vuye xwhw2v2 x17ydfre xl56j7k x1f6kntn x2b8uid xlyipyv x87ps6o x14atkfc x1lcm9me x1yr5g0i xrt01vj x10y3i5r x1d5wrs8 x1v8p93f xogb00i x16stqrj x1ftr3km x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x972fbf xcfux6l x1qhh985 xm0m39n xt0psk2 xexx8yu x4uap5 x18d9i69 xkhd6sd x1n2onr6 xjbqb8w xt7dq6l x173jzuc']").click()
-                sleep(10)
 
-            except Exception as e:
-                print(e)
-                sleep(5)
-
-
-rochaBot = instagramBot('user_name', 'password')
-rochaBot.login()
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,12 @@
+{
+  "origem": "ficticia",
+  "indice": ["P001", "P002", "P001", "P004", "P005", "P003", "P006"],
+  "publicacoes": [
+    {"id": "P001", "autor": "Ateliê de Papel", "legenda": "Formas e cores de uma manhã inventada.", "hashtags": ["arte", "cerâmica"], "cor": "argila", "comentarios": ["As formas ficaram lindas!"]},
+    {"id": "P002", "autor": "Traço de Nuvem", "legenda": "Um caderno, três cores e muitas possibilidades.", "hashtags": ["arte", "ilustração"], "cor": "lilas", "comentarios": []},
+    {"id": "P003", "autor": "Jardim Imaginário", "legenda": "Uma pequena floresta feita de recortes.", "hashtags": ["natureza", "papel"], "cor": "verde", "comentarios": []},
+    {"id": "P004", "autor": "Luz de Bolso", "legenda": "Geometria e luz em uma cidade que só existe aqui.", "hashtags": ["arte", "fotografia"], "cor": "azul", "comentarios": []},
+    {"id": "P005", "autor": "Caderno de Testes", "legenda": "Este post exercita uma falha técnica na confirmação do comentário.", "hashtags": ["arte", "estudo"], "cor": "rosa", "comentarios": [], "falha_confirmacao": true},
+    {"id": "P006", "autor": "Página Inventada", "legenda": "Uma história curta para uma tarde longa.", "hashtags": ["livros", "leitura"], "cor": "areia", "comentarios": []}
+  ]
+}

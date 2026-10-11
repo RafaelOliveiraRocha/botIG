@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+outputs/
+*.log
+geckodriver.log
+.pytest_cache/

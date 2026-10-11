@@ -1,0 +1,5 @@
+publicacao,hashtag,comentario,estado,motivo,origem,id_comentario
+P001,arte,Que combinação bonita de formas e cores!,Confirmado,,ficticia,demo-1
+P002,arte,Adorei os detalhes desta criação!,Confirmado,,ficticia,demo-2
+P001,arte,,Descartado,Publicação repetida na seleção.,ficticia,
+P004,arte,Uma ideia muito criativa. Obrigado por compartilhar!,Confirmado,,ficticia,demo-3
